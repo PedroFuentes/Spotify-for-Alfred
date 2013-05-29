@@ -41,9 +41,44 @@ include_once('include/functions.php');
 # thanks to http://www.alfredforum.com/topic/1788-prevent-flash-of-no-result
 $query = iconv("UTF-8-MAC", "UTF-8", $query);
 mb_internal_encoding("UTF-8");
+$chars = mb_strlen($query);
+$i = 0;
 
-//if(strlen($query) == 0) { // TODO
-if(mb_strlen($query) < 3) {	
+if($chars == 1 && mb_stristr('npts', $query)) {
+
+	$currentTrack = spotifyQuery("name of current track");
+	$currentStatus = (spotifyQuery("player state") == 'playing') ? '►' : '❙❙';
+	$currentAlbum = spotifyQuery("album of current track");
+	$currentArtist = spotifyQuery("artist of current track");
+
+	switch(mb_strtolower($query)){
+		case 'n':
+			$results[$i][title] = "Next Track";
+			$results[$i][subtitle] = "$currentStatus $currentTrack";
+			$results[$i][arg] = "next track";
+			$i++;
+			break;
+		case 'p':
+			$results[$i][title] = "Previous Track";
+			$results[$i][subtitle] = "$currentStatus $currentTrack";
+			$results[$i][arg] = "previous track";
+			$i++;
+			break;
+		case 't':
+			$results[$i][title] = "$currentStatus $currentTrack";
+			$results[$i][subtitle] = "$currentAlbum by $currentArtist";
+			$results[$i][arg] = "playpause";
+			$i++;
+			break;
+		case 's':
+			$results[$i][title] = "$currentStatus $currentTrack";
+			$results[$i][subtitle] = "$currentAlbum by $currentArtist";
+			$results[$i][arg] = "pause";
+			$i++;
+			break;
+	}
+
+} else if($chars < 3) {
 
 	$currentTrack = spotifyQuery("name of current track");
 	$currentStatus = (spotifyQuery("player state") == 'playing') ? '►' : '❙❙';
@@ -52,43 +87,27 @@ if(mb_strlen($query) < 3) {
 	$currentArtistArtwork = getArtistArtwork($currentArtist);
 	$currentURL = spotifyQuery("spotify url of current track");
 	$currentArtwork = getTrackArtwork($currentURL);
-	
-	$results[0][title] = "$currentStatus $currentTrack";
-	$results[0][subtitle] = "$currentAlbum by $currentArtist";
-	$results[0][arg] = "playpause";
-	
-	$results[1][title] = "$currentAlbum";
-	$results[1][subtitle] = "More from this album...";
-	$results[1][autocomplete] = "$currentAlbum";
-	$results[1][valid] = "no";
-	$results[1][icon] = (!file_exists($currentArtwork)) ? 'icon.png' : $currentArtwork;
-	
-	$results[2][title] = $currentArtist;
-	$results[2][subtitle] = "More by this artist...";
-	$results[2][autocomplete] = "$currentArtist";
-	$results[2][valid] = "no";
-	$results[2][icon] = (!file_exists($currentArtistArtwork)) ? 'icon.png' : $currentArtistArtwork;
-	
-	$results[3][title] = "Search for music...";
-	$results[3][subtitle] = "Begin typing to search";
-	$results[3][valid] = 'no';
-// TODO
-// } elseif(strlen($query) <= 3 && strlen($query) >= 1) {
-// 	$results[0][title] = "Search for artists...";
-// 	$results[0][subtitle] = "Narrow this search to artists";
-// 	$results[0][valid] = 'no';
-// 	
-// 	$results[1][title] = "Search for albums...";
-// 	$results[1][subtitle] = "Narrow this search to albums";
-// 	$results[1][valid] = 'no';
-// 	
-// 	$results[2][title] = "Search for tracks...";
-// 	$results[2][subtitle] = "Narrow this search to tracks";
-// 	$results[2][valid] = 'no';
-// 	
-// 	$results[3][title] = "Continue typing to search all...";
-// 	$results[3][subtitle] = "Search artists, albums, and tracks combined";
-// 	$results[3][valid] = 'no';
+
+	$results[$i][title] = "$currentStatus $currentTrack";
+	$results[$i][subtitle] = "$currentAlbum by $currentArtist";
+	$results[$i][arg] = "playpause";
+	$i++;
+	$results[$i][title] = "$currentAlbum";
+	$results[$i][subtitle] = "More from this album...";
+	$results[$i][autocomplete] = "$currentAlbum";
+	$results[$i][valid] = "no";
+	$results[$i][icon] = (!file_exists($currentArtwork)) ? 'icon.png' : $currentArtwork;
+	$i++;
+	$results[$i][title] = $currentArtist;
+	$results[$i][subtitle] = "More by this artist...";
+	$results[$i][autocomplete] = "$currentArtist";
+	$results[$i][valid] = "no";
+	$results[$i][icon] = (!file_exists($currentArtistArtwork)) ? 'icon.png' : $currentArtistArtwork;
+	$i++;
+	$results[$i][title] = "Search for music...";
+	$results[$i][subtitle] = "Begin typing to search";
+	$results[$i][valid] = 'no';
+
 } else {
 	foreach (array('track','artist','album') as $type) {
 		$json = fetch("http://ws.spotify.com/search/1/$type.json?q=" . str_replace("%3A", ":", urlencode($query)));
